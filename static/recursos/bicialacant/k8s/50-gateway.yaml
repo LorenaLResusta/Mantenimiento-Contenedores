@@ -1,0 +1,37 @@
+# Exposición HTTP con Gateway API (UD04).
+# Requiere Traefik instalado con Helm en el espacio «traefik» con el proveedor Gateway API:
+#   helm install traefik traefik/traefik -n traefik --create-namespace \
+#     --set providers.kubernetesGateway.enabled=true --set gateway.enabled=false
+# El chart crea la GatewayClass «traefik». Traefik escucha HTTP en su entrypoint «web» (puerto 8000).
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: publico
+  namespace: traefik
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 8000
+      allowedRoutes:
+        namespaces:
+          from: All
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: bicialacant
+  namespace: bicialacant
+spec:
+  parentRefs:
+    - name: publico
+      namespace: traefik
+  hostnames:
+    - bicialacant.local
+  rules:
+    - matches:
+        - path: {type: PathPrefix, value: /}
+      backendRefs:
+        - name: web
+          port: 80

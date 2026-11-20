@@ -1,0 +1,22 @@
+{{- /*
+  Enlace de descarga de un fichero de static/ y su contenido completo, plegado, para leerlo antes de usarlo.
+  Uso: {{< descarga "recursos/bicialacant/compose.yaml" >}}   (ruta dentro de static/)
+       {{< descarga "recursos/x.txt" "text" >}}              (lenguaje de resaltado opcional)
+  Si no se indica, el lenguaje se deduce de la extensión.
+*/ -}}
+{{- $f := .Get 0 -}}
+{{- $p := printf "static/%s" $f -}}
+{{- if not (fileExists $p) }}{{ errorf "descarga: no existe %s" $p }}{{ end -}}
+{{- $txt := readFile $p -}}
+{{- $ext := strings.TrimPrefix "." (path.Ext $f) -}}
+{{- $base := path.Base $f -}}
+{{- $map := dict "sh" "bash" "py" "python" "yaml" "yaml" "yml" "yaml" "sql" "sql" "conf" "nginx" "html" "html" "txt" "text" "toml" "toml" "json" "json" -}}
+{{- $lang := .Get 1 | default (index $map $ext) | default "text" -}}
+{{- if or (eq $base "Dockerfile") (hasPrefix $base "Dockerfile") }}{{ $lang = "dockerfile" }}{{ end -}}
+<div class="sad-descarga">
+  <p><a class="sad-btn" href="{{ $f | relURL }}" download>⬇ Descargar {{ $base }}</a></p>
+  <details>
+    <summary>Ver el contenido de {{ $base }}</summary>
+    {{ highlight $txt $lang "" }}
+  </details>
+</div>

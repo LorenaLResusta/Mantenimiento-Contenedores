@@ -1,0 +1,9 @@
+# Espacio de nombres del proyecto con el estándar de seguridad de Pods «restricted» (UD05)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bicialacant
+  labels:
+    app.kubernetes.io/part-of: bicialacant
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/warn: restricted

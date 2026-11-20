@@ -1,0 +1,46 @@
+# Rutas y receptores de Alertmanager (práctica 1.4). Se aplica con:
+#   helm upgrade kps prometheus-community/kube-prometheus-stack -n monitorizacion \
+#     -f kps-valores.yaml -f alertmanager-config.yaml
+# Mailpit en ct-ext (192.168.56.20) recibe el correo: http://192.168.56.20:8025
+alertmanager:
+  config:
+    global:
+      smtp_smarthost: "192.168.56.20:1025"
+      smtp_from: "alarmas@bicialacant.local"
+      smtp_require_tls: false
+      resolve_timeout: 5m
+    route:
+      receiver: "nulo"
+      group_by: ["alertname", "origen", "severity"]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      routes:
+        - matchers: ['alertname = "Watchdog"']
+          receiver: "nulo"
+        - matchers: ['namespace = "bicialacant"', 'severity = "critica"']
+          receiver: "guardia"
+          repeat_interval: 1h
+        - matchers: ['namespace = "bicialacant"', 'severity =~ "aviso|info"']
+          receiver: "operaciones"
+    inhibit_rules:
+      # Si la API está caída, no avises además de errores y latencia de la API
+      - source_matchers: ['alertname = "BiciAlacantApiSinDatos"']
+        target_matchers: ['origen = "api"', 'severity = "aviso"']
+        equal: ["namespace"]
+      # Una crítica silencia el aviso equivalente
+      - source_matchers: ['severity = "critica"']
+        target_matchers: ['severity = "aviso"']
+        equal: ["alertname", "origen"]
+    receivers:
+      - name: "nulo"
+      - name: "guardia"
+        email_configs:
+          - to: "guardia@bicialacant.local"
+            send_resolved: true
+            headers: {Subject: '[CRÍTICA] {{ .CommonLabels.alertname }} · {{ .CommonLabels.origen }}'}
+      - name: "operaciones"
+        email_configs:
+          - to: "operaciones@bicialacant.local"
+            send_resolved: true
+            headers: {Subject: '[{{ .CommonLabels.severity | toUpper }}] {{ .CommonLabels.alertname }}'}

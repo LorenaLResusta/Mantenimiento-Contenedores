@@ -1,0 +1,19 @@
+# Permite a Prometheus (y solo a Prometheus) leer /metrics de la API (prácticas 1.1 y 1.5).
+# Las NetworkPolicies son aditivas: esta se suma a la política «api» del proyecto.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: permitir-scrape-prometheus
+  namespace: bicialacant
+spec:
+  podSelector:
+    matchLabels: {app: api}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: monitorizacion}
+          podSelector:
+            matchLabels: {app.kubernetes.io/name: prometheus}
+      ports:
+        - {protocol: TCP, port: 8000}

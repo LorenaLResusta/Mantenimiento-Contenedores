@@ -1,0 +1,15 @@
+# Qué medir: la API de BiciAlacant, en el puerto «http», ruta /metrics, cada 15 s (práctica 1.1)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: bicialacant-api
+  namespace: bicialacant
+  labels: {app: api}
+spec:
+  selector:
+    matchLabels: {app: api}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 5s

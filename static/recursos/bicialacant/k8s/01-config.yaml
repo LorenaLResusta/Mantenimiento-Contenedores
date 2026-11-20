@@ -1,0 +1,15 @@
+# Configuración no secreta de la API. La contraseña va en un Secret que se crea a mano:
+#   kubectl -n bicialacant create secret generic db-cred --from-literal=password='CAMBIA_ESTO'
+# El script SQL inicial se carga como ConfigMap:
+#   kubectl -n bicialacant create configmap db-init --from-file=init.sql=../db/init.sql
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: bicialacant
+data:
+  DB_HOST: db
+  DB_NAME: bicialacant
+  DB_USER: bici
+  REDIS_HOST: cache
+  APP_VERSION: "1.1.0"

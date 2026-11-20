@@ -1,0 +1,7 @@
+{{- /* Etiqueta que indica el software y la versión de un ejemplo.  Uso: {{< sw "Docker Engine" >}} · {{< sw "Kubernetes 1.36" >}} */ -}}
+{{- $v := .Get 0 | default "Debian 13" -}}
+{{- $l := lower $v -}}
+{{- $c := "linux" -}}
+{{- if or (in $l "kubernetes") (in $l "kind") (in $l "kubeadm") (in $l "minikube") (in $l "k3s") }}{{ $c = "pve" }}{{ else if or (in $l "docker") (in $l "compose") }}{{ $c = "alt" }}{{ else if or (in $l "podman") (in $l "containerd") (in $l "buildah") }}{{ $c = "fw" }}{{ else if in $l "windows" }}{{ $c = "win" }}{{ end -}}
+<span class="sad-sw sad-sw--{{ $c }}">{{ $v }}</span>
+{{- /**/ -}}

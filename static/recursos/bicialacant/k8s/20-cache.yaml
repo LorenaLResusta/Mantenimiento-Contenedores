@@ -1,0 +1,46 @@
+# Redis como caché (sin persistencia en el clúster: si se pierde, solo se pierde el contador)
+apiVersion: v1
+kind: Service
+metadata:
+  name: cache
+  namespace: bicialacant
+spec:
+  selector: {app: cache}
+  ports:
+    - port: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cache
+  namespace: bicialacant
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: cache}
+  template:
+    metadata:
+      labels: {app: cache, tier: datos}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 200m, memory: 128Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+          volumeMounts:
+            - name: datos
+              mountPath: /data
+      volumes:
+        - name: datos
+          emptyDir: {}

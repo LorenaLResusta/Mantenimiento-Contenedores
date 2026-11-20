@@ -1,0 +1,13 @@
+# Clúster kind «produccion» del módulo de Mantenimiento: 1 plano de control + 2 nodos de trabajo.
+# El puerto 80 de ct-lab llega al NodePort 30080 de Traefik (entrada HTTP de BiciAlacant y Grafana).
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: produccion
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 80
+        protocol: TCP
+  - role: worker
+  - role: worker

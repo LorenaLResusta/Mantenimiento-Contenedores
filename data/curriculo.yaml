@@ -1,0 +1,53 @@
+# Resultados de Aprendizaje (RA) y Criterios de Evaluación (CE)
+# Módulo 5169 · Mantenimiento del sistema de contenedores desplegado (45 h · 6 ECTS)
+# Curso de especialización de FP de Grado Superior en Despliegue de productos software en contenedores
+# Real Decreto 144/2026, de 25 de febrero (BOE-A-2026-4672, 28/02/2026).
+#
+# REVISAR: el texto se ha transcrito por fragmentos desde el PDF del BOE. Antes de usarlo en la
+# programación, cotéjalo con el BOE (especialmente los títulos de RA3, RA4 y RA5 y los CE RA1.b,
+# RA1.c, RA1.d, RA2.d, RA4.e y RA4.g). Si corriges algo aquí, el shortcode {{< ra >}} lo actualiza en todo el sitio.
+RA1:
+  titulo: "Integra la conectividad a través de la red de datos entre el contenedor y los sistemas de monitorización y alarmas asociados."
+  ce:
+    a: "Se ha verificado la integración de un contenedor con el sistema de monitorización, probando las comunicaciones y comprobando la integridad de los datos enviados y recibidos y que dichos datos son almacenados en el sistema remoto."
+    b: "Se han configurado los umbrales de los contadores y las cadenas de texto requeridas en los eventos, de acuerdo con los valores recogidos en la documentación para generar diferentes tipos de indicadores."
+    c: "Se han configurado unas reglas de agregado y correlación de contadores, aplicando una parametrización acorde a los objetivos, para crear nuevos indicadores."
+    d: "Se han integrado los eventos generados en el contenedor en el sistema de gestión de alarmas, comprobando las comunicaciones y verificando que se almacenan en el sistema remoto para su gestión."
+    e: "Se han categorizado los eventos recibidos en el sistema de gestión de alarmas, agrupándolos según criterios tales como fecha de creación, origen, criticidad, entre otros, para la posterior notificación y tratamiento de la alarma."
+    f: "Se han auditado las comunicaciones entre el contenedor y los sistemas de monitorización y alarmas, verificando que sólo los protocolos y puertos requeridos para dicha comunicación están habilitados."
+    g: "Se han configurado las reglas de protección y seguridad tecnológica entre el contenedor y el entorno de monitorización y alarmas."
+RA2:
+  titulo: "Valida el sistema desplegado, comprobando su estado, indicadores y el rendimiento esperado."
+  ce:
+    a: "Se han documentado las métricas proporcionadas por una aplicación, explicando cada contador y verificando que se incluyen tanto indicadores de capacidad como de rendimiento y calidad."
+    b: "Se han implementado unos indicadores, realizando las fórmulas y cálculos sobre los contadores proporcionados por el sistema, especificando los umbrales para cada tipo de indicador."
+    c: "Se han documentado las posibles alarmas generadas por el sistema, indicando el origen, posible fallo y adjuntando los pasos a seguir para el análisis y resolución de las mismas."
+    d: "Se han ejecutado las pruebas del aplicativo o componente, incluyendo pruebas funcionales del servicio, de rendimiento y de seguridad digital de la aplicación y de estrés, verificando los resultados."
+    e: "Se han documentado las pruebas ejecutadas, almacenando los resultados y evidencias de ejecución junto con los indicadores y archivos de registro."
+    f: "Se han monitorizado los indicadores y su evolución, usando el sistema de monitorización y comprobando que el rendimiento de la aplicación no se excede de los umbrales marcados."
+RA3:
+  titulo: "Extrae datos e información, ejecutándolo manualmente o previa programación del proceso, para el control del sistema y la toma de decisiones."
+  ce:
+    a: "Se han observado periódicamente los archivos de registro de una aplicación, chequeando que no existen errores ni salidas inesperadas de la aplicación, reportando dichos fallos en caso de ocurrir."
+    b: "Se han monitorizado los accesos al sistema, detectando intentos con contraseña equivocada o ataques por fuerza bruta, bloqueando los no permitidos."
+    c: "Se han revisado periódicamente los datos generados por fallos o reinicios de la aplicación, tales como volcados de memoria (crashdumps), registros de error (log), entre otros, para corregir el origen del fallo."
+    d: "Se ha comprobado el rendimiento del equipo, evaluando y comparando indicadores tales como uso de CPU, de memoria, acceso a disco y otros."
+RA4:
+  titulo: "Ejecuta procesos de seguridad digital tales como backup y actualizaciones del software, programándolos y ejecutándolos."
+  ce:
+    a: "Se han programado las copias de seguridad de una aplicación, configurándolas para que sean ejecutadas periódicamente y verificando su ejecución para que se asegure la recuperación del sistema en caso de fallo."
+    b: "Se han exportado a un medio externo los ficheros de backup producidos por la aplicación, de acuerdo con las políticas de almacenamiento, rotación y limpieza."
+    c: "Se ha realizado el mantenimiento preventivo de las copias de seguridad de forma periódica, comprobando que la copia de seguridad puede ser restaurada, instanciando y verificando el despliegue en una plataforma de pruebas."
+    d: "Se ha mantenido el software de base de la aplicación, revisando en el repositorio la aparición de nuevas versiones o parches e instalándolas en su caso."
+    e: "Se han examinado las vulnerabilidades sobre los componentes usados internamente por el contenedor, buscando información en foros de programación del componente, implementando posibles soluciones."
+    f: "Se ha realizado la actualización de paquetes de software de forma periódica, descargando las nuevas versiones desde el repositorio externo, instalando los cambios y verificando que no se produce pérdida de los datos."
+    g: "Se han resuelto los problemas que aparezcan durante el proceso de actualización software, garantizando el funcionamiento y el nivel de calidad requerido y reportando al profesional del diseño de la aplicación."
+    h: "Se ha chequeado el funcionamiento de la aplicación y la integridad de los datos una vez actualizada, ejecutando pruebas en entornos previos y producción."
+    i: "Se ha documentado la actualización de las versiones software, actualizando el repositorio y garantizando la trazabilidad de los procesos, con el fin de facilitar su seguimiento."
+RA5:
+  titulo: "Ejecuta tareas de terminación del contenedor, eliminando programas y datos relacionados de forma segura."
+  ce:
+    a: "Se ha terminado la aplicación software desplegada en contenedor cuando no va a ser usada, verificando que los recursos usados por el contenedor en la infraestructura han quedado liberados."
+    b: "Se han eliminado las copias de seguridad digital (backup) y los archivos de registro almacenados en sistemas externos, asegurando que no es posible ya su restauración mediante técnicas de recuperación de datos."
+    c: "Se han borrado los datos en posibles bases de datos internas de la aplicación que contengan información confidencial o sensible."
+    d: "Se ha desconfigurado la conectividad e integración del contenedor con el entorno de monitorización, eliminando la comunicación a través de la red de datos y todas las referencias introducidas en los sistemas de monitorización y alarmas."

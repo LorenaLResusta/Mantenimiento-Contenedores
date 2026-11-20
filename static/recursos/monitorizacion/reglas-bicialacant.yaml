@@ -1,0 +1,83 @@
+# Indicadores (reglas de grabación) y alarmas de BiciAlacant (prácticas 1.2, 1.3 y 1.4).
+# Umbrales tomados del acuerdo de nivel de servicio (guía > Sistema que mantienes).
+# Etiquetas de clasificación de cada alarma:
+#   severity:  critica | aviso | info          (criticidad)
+#   categoria: disponibilidad | rendimiento | capacidad | estabilidad   (tipo de problema)
+#   origen:    web | api | db | cache | plataforma                     (componente)
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: bicialacant
+  namespace: monitorizacion
+spec:
+  groups:
+    # ---------- Indicadores derivados: agregado y correlación de contadores (1.3) ----------
+    - name: bicialacant.indicadores
+      interval: 30s
+      rules:
+        - record: bicialacant:peticiones:tasa5m
+          expr: sum by (ruta) (rate(bicialacant_peticiones_total[5m]))
+        - record: bicialacant:errores:ratio5m
+          expr: |
+            sum(rate(bicialacant_peticiones_total{codigo=~"5.."}[5m]))
+            / sum(rate(bicialacant_peticiones_total[5m]))
+        - record: bicialacant:latencia:p95_5m
+          expr: |
+            histogram_quantile(0.95,
+              sum by (le) (rate(bicialacant_duracion_peticion_segundos_bucket[5m])))
+        - record: bicialacant:cpu_por_peticion:5m
+          expr: |
+            sum(rate(container_cpu_usage_seconds_total{namespace="bicialacant", container="api"}[5m]))
+            / sum(rate(bicialacant_peticiones_total[5m]))
+    # ---------- Alarmas: umbrales (1.2) y eventos de los contenedores (1.4) ----------
+    - name: bicialacant.alarmas
+      rules:
+        - alert: BiciAlacantApiSinDatos
+          expr: sum(up{namespace="bicialacant", service="api"}) == 0 or absent(up{namespace="bicialacant", service="api"})
+          for: 1m
+          labels: {severity: critica, categoria: disponibilidad, origen: api}
+          annotations:
+            summary: "Prometheus no recibe métricas de ninguna réplica de la API"
+            description: "Comprueba que los Pods de la API están en marcha y que la NetworkPolicy permite el scrape."
+        - alert: BiciAlacantErroresAltos
+          expr: bicialacant:errores:ratio5m > 0.01
+          for: 2m
+          labels: {severity: aviso, categoria: rendimiento, origen: api}
+          annotations:
+            summary: "Más del 1 % de respuestas 5xx ({{ $value | humanizePercentage }})"
+        - alert: BiciAlacantErroresCriticos
+          expr: bicialacant:errores:ratio5m > 0.05
+          for: 2m
+          labels: {severity: critica, categoria: rendimiento, origen: api}
+          annotations:
+            summary: "Más del 5 % de respuestas 5xx ({{ $value | humanizePercentage }})"
+        - alert: BiciAlacantLatenciaAlta
+          expr: bicialacant:latencia:p95_5m > 0.3
+          for: 5m
+          labels: {severity: aviso, categoria: rendimiento, origen: api}
+          annotations:
+            summary: "El percentil 95 de la latencia supera 300 ms ({{ $value | humanizeDuration }})"
+        - alert: BiciAlacantDependenciaCaida
+          expr: bicialacant_dependencia_activa == 0
+          for: 1m
+          labels: {severity: critica, categoria: disponibilidad}
+          annotations:
+            summary: "La API no llega a {{ $labels.dependencia }}"
+        - alert: BiciAlacantEstacionSinBicis
+          expr: bicialacant_bicis_libres == 0
+          for: 10m
+          labels: {severity: info, categoria: capacidad, origen: api}
+          annotations:
+            summary: "La estación {{ $labels.estacion }} lleva 10 min sin bicis libres"
+        # Cadenas de texto en los eventos: el motivo de terminación o de espera del contenedor
+        - alert: BiciAlacantContenedorOOMKilled
+          expr: kube_pod_container_status_last_terminated_reason{namespace="bicialacant", reason="OOMKilled"} == 1
+          labels: {severity: aviso, categoria: estabilidad, origen: plataforma}
+          annotations:
+            summary: "{{ $labels.pod }}/{{ $labels.container }} terminó por falta de memoria"
+        - alert: BiciAlacantContenedorEnBucle
+          expr: kube_pod_container_status_waiting_reason{namespace="bicialacant", reason=~"CrashLoopBackOff|ImagePullBackOff|ErrImagePull"} == 1
+          for: 2m
+          labels: {severity: critica, categoria: estabilidad, origen: plataforma}
+          annotations:
+            summary: "{{ $labels.pod }} en {{ $labels.reason }}"

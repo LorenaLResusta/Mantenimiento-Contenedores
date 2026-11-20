@@ -1,0 +1,23 @@
+# Valores de kube-prometheus-stack para el laboratorio de Mantenimiento (práctica 1.1)
+#   helm install kps prometheus-community/kube-prometheus-stack -n monitorizacion --create-namespace -f kps-valores.yaml
+grafana:
+  adminPassword: "Grafana_Mant_2026"      # cámbiala; no la reutilices fuera del laboratorio
+  resources: {requests: {cpu: 50m, memory: 128Mi}}
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    scrapeInterval: 15s
+    resources: {requests: {cpu: 100m, memory: 512Mi}}
+    # Lee todos los ServiceMonitor y PrometheusRule del clúster, no solo los que llevan release: kps
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+alertmanager:
+  alertmanagerSpec:
+    resources: {requests: {cpu: 20m, memory: 64Mi}}
+  # La configuración de rutas y receptores se completa en la práctica 1.4 (alertmanager-config.yaml)
+# kind no expone las métricas de etcd, scheduler ni controller-manager: se desactivan para evitar falsas alarmas
+kubeEtcd: {enabled: false}
+kubeScheduler: {enabled: false}
+kubeControllerManager: {enabled: false}
+kubeProxy: {enabled: false}

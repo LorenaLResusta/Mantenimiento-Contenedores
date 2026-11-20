@@ -1,0 +1,74 @@
+# API de BiciAlacant 1.1.0: Deployment con 3 réplicas, sondas, actualización progresiva y métricas en /metrics
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: bicialacant
+spec:
+  labels: {app: api}
+  selector: {app: api}
+  ports:
+    - name: http          # el ServiceMonitor de la UD01 se refiere al puerto por su nombre
+      port: 8000
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: bicialacant
+  labels: {app: api}
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  selector:
+    matchLabels: {app: api}
+  template:
+    metadata:
+      labels: {app: api, tier: backend}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: api
+          # En kind: kind load docker-image bicialacant-api:1.1.0 --name produccion
+          image: bicialacant-api:1.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          envFrom:
+            - configMapRef: {name: api-config}
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: db-cred, key: password}
+            # Solo en el laboratorio: activa /api/prueba/lento y /api/prueba/error
+            - name: PRUEBAS_ACTIVADAS
+              value: "1"
+          readinessProbe:
+            httpGet: {path: /api/salud, port: 8000}
+            periodSeconds: 5
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: {path: /api/info, port: 8000}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

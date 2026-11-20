@@ -1,0 +1,67 @@
+# Configuración del sitio Hugo de los apuntes de Mantenimiento del sistema de contenedores desplegado (5169)
+# En GitHub Pages la Action sobrescribe baseURL con la URL real del sitio.
+baseURL = "https://lorenalresusta.github.io/Mantenimiento-Contenedores/"
+locale = "es-es"
+title = "Mantenimiento de contenedores · Operación de sistemas desplegados"
+theme = "hugo-book"
+copyright = "Apuntes de Mantenimiento del sistema de contenedores desplegado (5169) · Curso 2026/27"
+
+defaultContentLanguage = "es"
+
+[languages]
+  [languages.es]
+    label = "Castellano"
+    weight = 1
+    contentDir = "content.es"
+
+[params]
+  BookSection = '/'
+  BookToC = true
+  BookSearch = true
+  # light | dark | auto (sigue el tema del sistema operativo)
+  BookTheme = 'auto'
+  BookComments = false
+  BookPortableLinks = 'warning'
+  BookDateFormat = '02/01/2006'
+  BookRepo = 'https://github.com/LorenaLResusta/Mantenimiento-Contenedores'
+
+[markup]
+  [markup.goldmark.renderer]
+    # Necesario para Mermaid y los bloques HTML de los shortcodes
+    unsafe = true
+  [markup.highlight]
+    style = "github"
+    noClasses = true
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 3
+
+[caches]
+  [caches.images]
+    dir = ':cacheDir/images'
+
+[menu]
+  [[menu.after]]
+    name = "Apuntes de Despliegue (5166)"
+    url = "https://lorenalresusta.github.io/Despliegue-Contenedores/"
+    weight = 5
+  [[menu.after]]
+    name = "Documentación de Kubernetes"
+    url = "https://kubernetes.io/es/docs/home/"
+    weight = 10
+  [[menu.after]]
+    name = "Prometheus"
+    url = "https://prometheus.io/docs/introduction/overview/"
+    weight = 20
+  [[menu.after]]
+    name = "Grafana Loki"
+    url = "https://grafana.com/docs/loki/latest/"
+    weight = 30
+  [[menu.after]]
+    name = "Velero"
+    url = "https://velero.io/docs/"
+    weight = 40
+  [[menu.after]]
+    name = "RD 144/2026 (BOE)"
+    url = "https://www.boe.es/boe/dias/2026/02/28/pdfs/BOE-A-2026-4672.pdf"
+    weight = 50

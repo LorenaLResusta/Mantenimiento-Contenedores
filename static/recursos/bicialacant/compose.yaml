@@ -1,0 +1,78 @@
+# BiciAlacant con Docker Compose (UD02 · práctica 2.8 y proyecto)
+# Uso:  docker compose up -d --build     ·   http://<IP-de-la-VM>:8080
+name: bicialacant
+
+services:
+  web:
+    build: ./web
+    image: bicialacant-web:1.0.0
+    ports:
+      - "8080:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [frontal]
+    restart: unless-stopped
+
+  api:
+    build: ./api
+    image: bicialacant-api:1.1.0
+    environment:
+      DB_HOST: db
+      DB_NAME: bicialacant
+      DB_USER: bici
+      DB_PASSWORD_FILE: /run/secrets/db_password
+      REDIS_HOST: cache
+      APP_VERSION: 1.1.0
+    secrets: [db_password]
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_started
+    networks: [frontal, datos]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: bicialacant
+      POSTGRES_USER: bici
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    volumes:
+      - datos-db:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bici -d bicialacant"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [datos]
+    restart: unless-stopped
+
+  cache:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - datos-cache:/data
+    networks: [datos]
+    restart: unless-stopped
+
+networks:
+  frontal: {}
+  datos:
+    internal: true        # la red de datos no tiene salida a Internet
+
+volumes:
+  datos-db: {}
+  datos-cache: {}
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt   # créalo tú: no se sube nunca a Git
