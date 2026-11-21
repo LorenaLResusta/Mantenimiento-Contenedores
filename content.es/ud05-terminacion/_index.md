@@ -9,11 +9,9 @@ Todo servicio termina. Darlo de baja bien significa **liberar todos los recursos
 
 {{< ra "RA5:a,b,c,d" "RA4:i" "RA1:g" >}}
 
-| Bloque | Contenido |
+| Página | Contenido |
 |---|---|
-| Teoría (1 h) | Plan de baja · recursos que sobreviven a un `kubectl delete` (PV con `Retain`, imágenes, secretos, objetos en MinIO) · borrado seguro y sus límites en SSD y almacenamiento de objetos (borrado criptográfico) · protección de datos personales · desintegración de la monitorización · certificado de borrado |
-| 5.1 Guiada (1,5 h) | Baja ordenada de BiciAlacant y comprobación de que no quedan recursos ni referencias en Prometheus y Alertmanager |
-| 5.2 Guiada (1,5 h) | Borrado seguro de copias en MinIO y de registros; borrado de los datos sensibles de la base de datos |
-| 5.3 Proyecto (3 h) | **Práctica final**: sistema restaurado desde copia, revisión de indicadores, simulacro de incidencia y baja segura, con el libro de operaciones completo |
+| [Teoría](/ud05-terminacion/ud05-teoria/) | Plan de baja e inventario · recursos que sobreviven a un `kubectl delete` · borrado de datos personales en PostgreSQL (`DELETE`, `VACUUM FULL`, copias y WAL) · borrado seguro y sus límites; borrado criptográfico · borrado en almacenes de objetos, Loki y Prometheus · desintegración de la monitorización · comprobación y certificado de borrado (1 h) |
+| [Prácticas](/ud05-terminacion/ud05-practicas/) | 5.1 Plan de baja, borrado de datos personales y retirada del servicio · 5.2 Borrado seguro de copias y registros y desintegración de la monitorización · 5.3 **Práctica final** con rúbrica (6 h) |
 
 **Duración:** 7 horas (1 h de teoría y 6 h de prácticas). **Hito H5:** práctica final.

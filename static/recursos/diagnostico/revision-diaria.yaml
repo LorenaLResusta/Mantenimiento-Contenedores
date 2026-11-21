@@ -1,0 +1,139 @@
+# Revisión diaria automatizada de BiciAlacant (práctica 3.1, paso 7).
+# Un CronJob consulta Loki y Prometheus cada mañana, escribe el informe en sus registros
+# (que a su vez quedan en Loki) y lo envía por correo a Mailpit (ct-ext).
+#   kubectl apply -f revision-diaria.yaml
+#   kubectl -n monitorizacion create job --from=cronjob/revision-diaria revision-ahora   # ejecutarlo ya
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: revision-diaria
+  namespace: monitorizacion
+data:
+  revision.py: |
+    """Informe diario de BiciAlacant: errores, eventos, reinicios, accesos fallidos y recursos."""
+    import json, os, smtplib, sys, urllib.parse, urllib.request
+    from datetime import datetime
+    from email.message import EmailMessage
+
+    LOKI = os.environ.get("LOKI", "http://loki.monitorizacion.svc:3100")
+    PROM = os.environ.get("PROM", "http://prometheus-operated.monitorizacion.svc:9090")
+    VENTANA = os.environ.get("VENTANA", "24h")
+    problemas = []
+
+    def consulta(base, ruta, q):
+        url = f"{base}{ruta}?" + urllib.parse.urlencode({"query": q})
+        with urllib.request.urlopen(url, timeout=20) as r:
+            return json.load(r)["data"]["result"]
+
+    def tabla(titulo, base, ruta, q, etiqueta, umbral=None, fmt="{:.0f}", minimo=None):
+        lineas = [f"\n## {titulo}", f"   consulta: {q}"]
+        try:
+            res = consulta(base, ruta, q)
+        except Exception as e:  # noqa: BLE001
+            problemas.append(f"No se pudo consultar «{titulo}»: {e}")
+            return lineas + [f"   ERROR al consultar: {e}"]
+        if not res:
+            return lineas + ["   (sin resultados: nada que señalar)"]
+        for s in sorted(res, key=lambda s: -float(s["value"][1])):
+            valor = float(s["value"][1])
+            nombre = ", ".join(f"{k}={s['metric'].get(k, '?')}" for k in etiqueta)
+            marca = ""
+            if (umbral is not None and valor >= umbral) or (minimo is not None and valor < minimo):
+                marca = "  <-- REVISAR"
+                problemas.append(f"{titulo}: {nombre} = {fmt.format(valor)}")
+            lineas.append(f"   {fmt.format(valor):>10}  {nombre}{marca}")
+        return lineas
+
+    v = VENTANA
+    informe = [f"# Revisión diaria de BiciAlacant · {datetime.now():%Y-%m-%d %H:%M} · ventana {v}"]
+    informe += tabla("Líneas de error en los registros", LOKI, "/loki/api/v1/query",
+        f'sum by (app, container) (count_over_time({{namespace="bicialacant"}} |~ "(?i)error|exception|traceback" [{v}]))',
+        ["app", "container"], umbral=1)
+    informe += tabla("Eventos de aviso de Kubernetes", LOKI, "/loki/api/v1/query",
+        f'sum by (reason) (count_over_time({{job="eventos", namespace="bicialacant"}} | logfmt | type="Warning" [{v}]))',
+        ["reason"], umbral=1)
+    informe += tabla("Reinicios de contenedores", PROM, "/api/v1/query",
+        f'sum by (container) (increase(kube_pod_container_status_restarts_total{{namespace="bicialacant"}}[{v}])) > 0',
+        ["container"], umbral=1)
+    informe += tabla("Terminaciones por falta de memoria (último motivo)", PROM, "/api/v1/query",
+        'sum by (container) (kube_pod_container_status_last_terminated_reason{namespace="bicialacant", reason="OOMKilled"}) > 0',
+        ["container"], umbral=1)
+    informe += tabla("Inicios de sesión fallidos en Grafana", LOKI, "/loki/api/v1/query",
+        f'sum(count_over_time({{namespace="monitorizacion", container="grafana"}} |~ "(?i)invalid username or password" [{v}]))',
+        [], umbral=10)
+    informe += tabla("Pico de CPU de la API (fracción del límite)", PROM, "/api/v1/query",
+        f'max_over_time(bicialacant:cpu_uso_sobre_limite:ratio[{v}])',
+        [], umbral=0.9, fmt="{:.2f}")
+    informe += tabla("Pico de memoria de la API (fracción del límite)", PROM, "/api/v1/query",
+        f'max_over_time(bicialacant:memoria_uso_sobre_limite:ratio_max[{v}])',
+        [], umbral=0.8, fmt="{:.2f}")
+    informe += tabla("Disco libre en los nodos (fracción)", PROM, "/api/v1/query",
+        'min by (instance) (node_filesystem_avail_bytes{mountpoint="/", fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{mountpoint="/", fstype!~"tmpfs|overlay"})',
+        ["instance"], fmt="{:.2f}", minimo=0.15)
+
+    estado = "SIN INCIDENCIAS" if not problemas else f"{len(problemas)} PUNTOS A REVISAR"
+    informe.insert(1, f"Estado: {estado}")
+    if problemas:
+        informe += ["\n## A revisar"] + [f" - {p}" for p in problemas]
+    texto = "\n".join(informe)
+    print(texto)
+
+    if os.environ.get("SMTP"):
+        m = EmailMessage()
+        m["Subject"] = f"[BiciAlacant] Revisión diaria: {estado}"
+        m["From"] = os.environ.get("DE", "revision@bicialacant.local")
+        m["To"] = os.environ.get("PARA", "operaciones@bicialacant.local")
+        m.set_content(texto)
+        host, puerto = os.environ["SMTP"].split(":")
+        try:
+            with smtplib.SMTP(host, int(puerto), timeout=20) as s:
+                s.send_message(m)
+            print(f"\nInforme enviado a {m['To']}")
+        except OSError as e:
+            print(f"\nNo se pudo enviar el correo: {e}", file=sys.stderr)
+            sys.exit(2)
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: revision-diaria
+  namespace: monitorizacion
+spec:
+  schedule: "30 7 * * *"            # cada día a las 7:30…
+  timeZone: "Europe/Madrid"         # …hora de Madrid (sin esto, el horario es UTC)
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7     # se conservan los informes de una semana
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 300
+      template:
+        metadata:
+          labels: {app: revision-diaria}
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile: {type: RuntimeDefault}
+          containers:
+            - name: revision
+              image: python:3.13-alpine
+              command: ["python", "/script/revision.py"]
+              env:
+                - {name: VENTANA, value: "24h"}
+                - {name: SMTP, value: "192.168.56.20:1025"}
+                - {name: PARA, value: "operaciones@bicialacant.local"}
+              resources:
+                requests: {cpu: 10m, memory: 32Mi}
+                limits: {memory: 128Mi}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: {drop: [ALL]}
+              volumeMounts:
+                - {name: script, mountPath: /script, readOnly: true}
+          volumes:
+            - name: script
+              configMap: {name: revision-diaria}

@@ -13,10 +13,10 @@ Todo el curso se hace sobre **máquinas virtuales** propias. Así puedes romper 
 | Máquina | Uso | vCPU | RAM | Disco | IP (red solo-anfitrión) |
 |---|---|:-:|:-:|:-:|---|
 | `ct-lab` | Producción: clúster kind «produccion» (3 nodos) con BiciAlacant, Prometheus, Grafana y Loki. Aquí también se crea el clúster «pruebas» de la UD04 | 4 | 8 GB | 60 GB | 192.168.56.10 |
-| `ct-ext` | **Medio externo**: MinIO (almacén S3 de las copias) y receptor de alarmas por correo (Mailpit) | 1 | 2 GB | 30 GB | 192.168.56.20 |
+| `ct-ext` | **Medio externo**: Garage (almacén S3 de las copias) y receptor de alarmas por correo (Mailpit) | 1 | 2 GB | 30 GB | 192.168.56.20 |
 
 > [!TIP]
-> **Equipo con poca memoria.** Con 8 GB de RAM en tu ordenador, da 5-6 GB a `ct-lab` y ejecuta MinIO y Mailpit como contenedores Docker dentro de `ct-lab` (la UD04 explica cómo). Pierdes la separación física del medio externo, pero las prácticas funcionan igual.
+> **Equipo con poca memoria.** Con 8 GB de RAM en tu ordenador, da 5-6 GB a `ct-lab` y ejecuta Garage y Mailpit como contenedores Docker dentro de `ct-lab` (la UD04 explica cómo; MinIO dejó de publicar imágenes en 2025 y se sustituye por Garage). Pierdes la separación física del medio externo, pero las prácticas funcionan igual.
 
 Todas las máquinas usan **Debian 13 (trixie)** instalado sin entorno gráfico, con el servidor SSH y las utilidades estándar del sistema.
 
@@ -46,7 +46,7 @@ Añade los nombres al fichero `/etc/hosts` de **todas** las máquinas y también
 
 ```text
 192.168.56.10  ct-lab bicialacant.local grafana.local
-192.168.56.20  ct-ext minio.local
+192.168.56.20  ct-ext garage.local
 ```
 
 ## 3. Preparación básica de cada máquina
@@ -83,7 +83,7 @@ El script crea el clúster kind «produccion» (un plano de control y dos nodos 
 | Mailpit (receptor de correo de las alarmas) | `ct-ext` | UD01 |
 | k6 (pruebas de carga y estrés) y OWASP ZAP (pruebas de seguridad) | `ct-lab` | UD02 |
 | Loki y Grafana Alloy (registros centralizados) · fail2ban | clúster «produccion» · `ct-lab` | UD03 |
-| MinIO · Velero · Trivy | `ct-ext` · clúster · `ct-lab` | UD04 |
+| Garage · Velero · Trivy | `ct-ext` · clúster · `ct-lab` | UD04 |
 
 ## 6. Normas del laboratorio
 

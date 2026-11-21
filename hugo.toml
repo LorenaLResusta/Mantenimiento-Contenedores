@@ -25,6 +25,12 @@ defaultContentLanguage = "es"
   BookDateFormat = '02/01/2006'
   BookRepo = 'https://github.com/LorenaLResusta/Mantenimiento-Contenedores'
 
+  # Enlaces entre los dos módulos del curso de especialización y al portal de FP (shortcode relacion)
+  [params.modulos]
+    despliegue = "https://lorenalresusta.github.io/Despliegue-Contenedores/"
+    mantenimiento = "https://lorenalresusta.github.io/Mantenimiento-Contenedores/"
+    portal = "https://lorenalresusta.github.io/FP/"
+
 [markup]
   [markup.goldmark.renderer]
     # Necesario para Mermaid y los bloques HTML de los shortcodes

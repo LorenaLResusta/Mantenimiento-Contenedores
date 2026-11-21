@@ -9,14 +9,9 @@ Que el sistema «funcione» no basta: hay que **demostrar** que cumple el acuerd
 
 {{< ra "RA2:a,b,c,d,e,f" "RA1:b,c" >}}
 
-| Bloque | Contenido |
+| Página | Contenido |
 |---|---|
-| Teoría (3 h) | Métricas de capacidad, rendimiento y calidad · métodos RED y USE · SLI, SLO y presupuesto de error · PromQL para indicadores · catálogo de alarmas · tipos de prueba (funcional, carga, estrés, seguridad) · evidencias e informe de pruebas |
-| 2.1 Guiada (1 h) | Catálogo de métricas de BiciAlacant: qué mide cada contador y de qué tipo es |
-| 2.2 Guiada (1 h) | Indicadores con PromQL y umbrales; panel de SLO en Grafana |
-| 2.3 Autónoma (1 h) | Catálogo de alarmas: origen, fallo probable y pasos de análisis y resolución |
-| 2.4 Guiada (1,5 h) | Pruebas funcionales (`curl`/script) y de carga y estrés con k6 |
-| 2.5 Guiada (0,5 h) | Prueba de seguridad básica con OWASP ZAP (*baseline*) |
-| 2.6 Proyecto (1 h) | Informe de pruebas con evidencias y evolución de los indicadores frente a los umbrales |
+| [Teoría](/ud02-validacion-sistema/ud02-teoria/) | Validar frente a comprobar · métricas de capacidad, rendimiento y calidad · métodos RED y USE · SLA, SLO, SLI y presupuesto de error · tasa de consumo · indicadores con PromQL y origen de los umbrales · catálogo de alarmas · pruebas funcionales, de carga, de estrés y de seguridad (k6 y OWASP ZAP) · evidencias e informe · seguimiento en Grafana (3 h) |
+| [Prácticas](/ud02-validacion-sistema/ud02-practicas/) | 2.1 Catálogo de métricas · 2.2 Indicadores, umbrales y panel del SLO · 2.3 Catálogo de alarmas (autónoma) · 2.4 Pruebas funcionales, de carga y de estrés · 2.5 Prueba de seguridad con ZAP · 2.6 Informe de pruebas (proyecto) · reto de resistencia (6 h) |
 
 **Duración:** 9 horas (3 h de teoría y 6 h de prácticas). **Hito H2:** sistema validado.

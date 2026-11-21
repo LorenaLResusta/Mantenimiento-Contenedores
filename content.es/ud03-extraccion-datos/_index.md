@@ -9,13 +9,9 @@ El técnico de operaciones vive de los datos que genera el sistema. Aprendes a r
 
 {{< ra "RA3:a,b,c,d" "RA2:f" >}}
 
-| Bloque | Contenido |
+| Página | Contenido |
 |---|---|
-| Teoría (2 h) | Registros en contenedores (stdout, rotación, `kubectl logs --previous`) · centralización con Loki y LogQL · eventos de Kubernetes · motivos de terminación y `OOMKilled` · volcados y depuración con `kubectl debug` · métricas de nodo y contenedor · automatizar la revisión: `CronJob`, `cron` y alertas sobre registros |
-| 3.1 Guiada (1,5 h) | Loki y Alloy: búsqueda de errores en los registros y revisión diaria programada con informe |
-| 3.2 Guiada (1,5 h) | Accesos: intentos fallidos por SSH y en la web; bloqueo con fail2ban y alerta en Loki |
-| 3.3 Guiada (1,5 h) | Fallos y reinicios: provocar un `OOMKilled` y un *crash*, recoger registros previos, eventos y volcado y corregir la causa |
-| 3.4 Autónoma (1 h) | Rendimiento: CPU, memoria y disco de nodos y contenedores; comparación antes y después de un ajuste de recursos |
-| Proyecto (0,5 h) | Capítulo `03-revision-periodica.md` del libro de operaciones |
+| [Teoría](/ud03-extraccion-datos/ud03-teoria/) | Registros en contenedores (stdout, rotación, `--previous`) · eventos y su caducidad · Loki, Alloy y LogQL · revisión periódica manual y programada (`CronJob`, `cron`, alertas sobre registros) · accesos fallidos, fuerza bruta y fail2ban · motivos de terminación, `OOMKilled` y `CrashLoopBackOff` · volcados y `kubectl debug` · rendimiento de nodos y contenedores (2 h) |
+| [Prácticas](/ud03-extraccion-datos/ud03-practicas/) | 3.1 Registros centralizados y revisión diaria programada · 3.2 Accesos fallidos y fuerza bruta · 3.3 Fallos y reinicios · 3.4 Rendimiento (autónoma) · 3.5 Capítulo `03-revision-periodica.md` (proyecto) · reto: SSH en Loki (6 h) |
 
 **Duración:** 8 horas (2 h de teoría y 6 h de prácticas). **Hito H3:** diagnóstico.

@@ -58,6 +58,8 @@ flowchart LR
 
 ## 2. Cómo llegan los datos: el modelo *pull* de Prometheus
 
+{{< relacion "despliegue" "ud05-seguridad-monitorizacion/ud05-teoria/#81-prometheus|UD05 · Prometheus" "ud03-kubernetes/ud03-teoria/#11-empaquetado-helm-y-kustomize|UD03 · Helm" >}}
+
 Prometheus **pregunta** a cada objetivo (*target*) cada pocos segundos: hace un `GET /metrics` y guarda lo que recibe. A esto se le llama ***scrape***. La aplicación no envía nada: solo publica sus contadores en texto plano.
 
 ```text
@@ -84,6 +86,8 @@ No todo software publica `/metrics`. Para eso existen los **exportadores**: pequ
 La **API 1.1.0** de BiciAlacant incluye la biblioteca `prometheus-client` y publica sus propias métricas: es lo que se llama **instrumentar** una aplicación.
 
 ### 2.2 Descubrimiento de objetivos: ServiceMonitor
+
+{{< relacion "despliegue" "ud04-redes-almacenamiento/ud04-teoria/#3-services|UD04 · Services" >}}
 
 En Kubernetes las IP de los Pods cambian, así que no se le dan IP a Prometheus. El **Prometheus Operator** (incluido en *kube-prometheus-stack*) añade un objeto que describe **qué medir**:
 
@@ -259,6 +263,8 @@ La monitorización abre caminos entre el contenedor y otros sistemas. Cada camin
 Auditar es comprobar que **solo** esas comunicaciones están habilitadas: qué puertos escucha cada contenedor (`ss -ltn`), qué puertos están accesibles desde fuera (`nmap`), y qué permiten las políticas de red.
 
 ### 7.2 Reglas de protección
+
+{{< relacion "despliegue" "ud05-seguridad-monitorizacion/ud05-teoria/#6-políticas-de-red|UD05 · Políticas de red" >}}
 
 | Medida | Cómo |
 |---|---|

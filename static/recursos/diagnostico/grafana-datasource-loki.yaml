@@ -1,0 +1,20 @@
+# Añade Loki como origen de datos de Grafana (práctica 3.1).
+# El sidecar de Grafana de kube-prometheus-stack carga los ConfigMap con la etiqueta grafana_datasource: "1".
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasource-loki
+  namespace: monitorizacion
+  labels:
+    grafana_datasource: "1"
+data:
+  loki.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        type: loki
+        uid: loki
+        access: proxy
+        url: http://loki.monitorizacion.svc:3100
+        jsonData:
+          maxLines: 1000

@@ -1,0 +1,20 @@
+# Configuración de Garage (almacén S3) en ct-ext · práctica 4.2
+# Antes de arrancar, sustituye los tres secretos:  openssl rand -hex 32  /  openssl rand -base64 32
+metadata_dir = "/var/lib/garage/meta"
+data_dir     = "/var/lib/garage/data"
+db_engine    = "sqlite"
+replication_factor = 1            # un solo nodo: en producción, 3 nodos en zonas distintas
+
+rpc_bind_addr   = "[::]:3901"
+rpc_public_addr = "127.0.0.1:3901"
+rpc_secret      = "CAMBIA_POR_64_CARACTERES_HEX"
+
+[s3_api]
+s3_region     = "garage"
+api_bind_addr = "[::]:3900"
+root_domain   = ".s3.garage.localhost"
+
+[admin]
+api_bind_addr = "[::]:3903"
+admin_token   = "CAMBIA_ESTE_TOKEN"
+metrics_token = "CAMBIA_ESTE_OTRO_TOKEN"

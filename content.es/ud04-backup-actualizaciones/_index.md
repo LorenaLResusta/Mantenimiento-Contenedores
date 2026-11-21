@@ -9,14 +9,9 @@ Una copia que no se ha restaurado nunca no es una copia. En esta unidad programa
 
 {{< ra "RA4:a,b,c,d,e,f,g,h,i" "RA2:d" >}}
 
-| Bloque | Contenido |
+| Página | Contenido |
 |---|---|
-| Teoría (4 h) | RPO y RTO · qué copiar en un sistema de contenedores (datos, manifiestos, secretos, etcd) · copias lógicas (`pg_dump`) frente a copias de volumen y de clúster (Velero) · regla 3-2-1, rotación y retención · prueba de restauración · ciclo de vida de las imágenes, CVE y SBOM · estrategias de actualización y vuelta atrás · registro de cambios y trazabilidad |
-| 4.1 Guiada (1,5 h) | `CronJob` de copia de PostgreSQL y verificación de su ejecución |
-| 4.2 Guiada (1,5 h) | Exportación a MinIO con política de retención y limpieza; copia del clúster con Velero |
-| 4.3 Guiada (1,5 h) | Restauración en el clúster kind «pruebas» y verificación del despliegue |
-| 4.4 Guiada (1,5 h) | Vulnerabilidades con Trivy, búsqueda de soluciones y nuevas versiones de las imágenes base |
-| 4.5 Guiada (1 h) | Actualización en producción (API 1.1.0 → 1.2.0, PostgreSQL menor) sin pérdida de datos y vuelta atrás si falla |
-| 4.6 Proyecto (1 h) | Registro de cambios, etiquetas en Git y capítulo `04-copias-y-actualizaciones.md` |
+| [Teoría](/ud04-backup-actualizaciones/ud04-teoria/) | RPO y RTO · regla 3-2-1, retención y rotación · qué copiar en un sistema de contenedores · copia lógica (`pg_dump`) frente a copia de volumen (Velero) · `CronJob` y verificación con alarmas · almacenamiento de objetos S3 (Garage) · prueba de restauración · versiones, CVE, SBOM y Trivy · migraciones «ampliar y contraer», estrategias de despliegue y vuelta atrás · trazabilidad (4 h) |
+| [Prácticas](/ud04-backup-actualizaciones/ud04-practicas/) | 4.1 Copia programada de PostgreSQL · 4.2 Medio externo, retención y Velero · 4.3 Restauración en el clúster «pruebas» · 4.4 Vulnerabilidades y versiones nuevas · 4.5 Actualización a la API 1.2.0 y PostgreSQL sin pérdida de datos · 4.6 Copias y registro de cambios (proyecto) · reto de copia inmutable (8 h) |
 
 **Duración:** 12 horas (4 h de teoría y 8 h de prácticas). **Hito H4:** protegido y al día.

@@ -1,0 +1,17 @@
+# /etc/fail2ban/jail.d/sshd.local · Protección de SSH en ct-lab (práctica 3.2)
+# Debian 13 guarda los registros de SSH en journald: fail2ban los lee con backend = systemd.
+[DEFAULT]
+# Nunca bloquear la propia máquina ni tu equipo (cambia 192.168.56.1 por la IP de tu anfitrión)
+ignoreip = 127.0.0.1/8 ::1 192.168.56.1
+
+[sshd]
+enabled  = true
+backend  = systemd
+port     = ssh
+# 5 fallos en 10 minutos -> bloqueo de 15 minutos
+maxretry = 5
+findtime = 10m
+bantime  = 15m
+# Las reincidencias se bloquean el doble de tiempo cada vez (hasta 1 día)
+bantime.increment = true
+bantime.maxtime   = 1d

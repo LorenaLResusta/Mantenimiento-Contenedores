@@ -316,3 +316,15 @@
 .sad-cal-stats b { display: block; font-size: 1.35rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .sad-cal-stats span { font-size: var(--font-size-smaller); opacity: .8; }
 .sad-day.dir::after { content: ""; display: block; width: 4px; height: 4px; margin: 1px auto -3px; border-radius: 50%; background: #fff; }
+
+/* ---- Enlaces entre módulos (shortcode relacion) ---- */
+.sad-relacion {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .75rem;
+  margin: .5rem 0 1rem; padding: .45rem .8rem;
+  border-left: 4px solid #6b5bd2; border-radius: var(--border-radius);
+  background: color-mix(in srgb, #6b5bd2 7%, transparent);
+  font-size: .9em;
+}
+.sad-relacion--mantenimiento { border-left-color: #1f8a70; background: color-mix(in srgb, #1f8a70 7%, transparent); }
+.sad-relacion-tit { font-weight: 600; }
+.sad-relacion a::after { content: " ↗"; font-size: .85em; }

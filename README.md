@@ -19,9 +19,10 @@ data/curriculo.yaml                    RA y CE oficiales del módulo 5169 (RD 14
 layouts/_shortcodes/                   practica, ra, quiz, descarga, figura, sw
 static/recursos/arranque/              script y configuración para poner BiciAlacant en producción con kind
 static/recursos/bicialacant/           código del proyecto: API, web, SQL, compose.yaml y manifiestos k8s/
+static/recursos/{validacion,diagnostico,copias,actualizacion,terminacion}/   recursos de las UD02-UD05
 ```
 
-Cada unidad tendrá `udNN-teoria.md` y `udNN-practicas.md` con el mismo formato que el resto de repositorios.
+Cada unidad tiene `udNN-teoria.md` y `udNN-practicas.md` con el mismo formato que el resto de repositorios.
 
 ## Prácticas
 

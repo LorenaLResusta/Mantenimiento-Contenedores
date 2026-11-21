@@ -1,0 +1,12 @@
+# Clúster kind «pruebas» (práctica 4.3): plataforma de pruebas donde se restauran las copias.
+# Un solo nodo; BiciAlacant se publica en el puerto 8081 de ct-lab para no chocar con producción.
+#   kind create cluster --config kind-pruebas.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: pruebas
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 8081
+        protocol: TCP

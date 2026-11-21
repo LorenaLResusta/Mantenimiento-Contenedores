@@ -1,0 +1,110 @@
+# Indicadores de validación y alarmas del SLO de BiciAlacant (UD02, prácticas 2.2 y 2.3).
+# Completa reglas-bicialacant.yaml de la UD01: no lo sustituye.
+# SLO: 99,5 % de peticiones sin 5xx en 30 días  ->  presupuesto de error = 0,005
+#      95 % de peticiones en menos de 300 ms
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: bicialacant-slo
+  namespace: monitorizacion
+spec:
+  groups:
+    # ---------- SLI de disponibilidad en varias ventanas (para la tasa de consumo) ----------
+    - name: bicialacant.sli
+      interval: 30s
+      rules:
+        - record: bicialacant:sli_disponibilidad:ratio_rate5m
+          expr: |
+            sum(rate(bicialacant_peticiones_total{codigo!~"5.."}[5m]))
+            / sum(rate(bicialacant_peticiones_total[5m]))
+        - record: bicialacant:sli_disponibilidad:ratio_rate30m
+          expr: |
+            sum(rate(bicialacant_peticiones_total{codigo!~"5.."}[30m]))
+            / sum(rate(bicialacant_peticiones_total[30m]))
+        - record: bicialacant:sli_disponibilidad:ratio_rate1h
+          expr: |
+            sum(rate(bicialacant_peticiones_total{codigo!~"5.."}[1h]))
+            / sum(rate(bicialacant_peticiones_total[1h]))
+        - record: bicialacant:sli_disponibilidad:ratio_rate6h
+          expr: |
+            sum(rate(bicialacant_peticiones_total{codigo!~"5.."}[6h]))
+            / sum(rate(bicialacant_peticiones_total[6h]))
+        # SLI de latencia: proporción de peticiones por debajo de 300 ms (0.3 es un borde de cubo)
+        - record: bicialacant:sli_latencia:ratio_rate5m
+          expr: |
+            sum(rate(bicialacant_duracion_peticion_segundos_bucket{le="0.3"}[5m]))
+            / sum(rate(bicialacant_duracion_peticion_segundos_count[5m]))
+    # ---------- Indicadores de capacidad (método USE) ----------
+    - name: bicialacant.capacidad
+      interval: 30s
+      rules:
+        - record: bicialacant:cpu_uso_sobre_limite:ratio
+          expr: |
+            sum(rate(container_cpu_usage_seconds_total{namespace="bicialacant", container="api"}[5m]))
+            / sum(kube_pod_container_resource_limits{namespace="bicialacant", container="api", resource="cpu"})
+        - record: bicialacant:memoria_uso_sobre_limite:ratio_max
+          expr: |
+            max(
+              max by (pod) (container_memory_working_set_bytes{namespace="bicialacant", container="api"})
+              / on (pod) max by (pod) (kube_pod_container_resource_limits{namespace="bicialacant", container="api", resource="memory"})
+            )
+        - record: bicialacant:cpu_limitada:ratio_rate5m
+          expr: |
+            sum(rate(container_cpu_cfs_throttled_periods_total{namespace="bicialacant", container="api"}[5m]))
+            / sum(rate(container_cpu_cfs_periods_total{namespace="bicialacant", container="api"}[5m]))
+        - record: bicialacant:reinicios:increase1h
+          expr: sum by (container) (increase(kube_pod_container_status_restarts_total{namespace="bicialacant"}[1h]))
+    # ---------- Alarmas ----------
+    - name: bicialacant.slo.alarmas
+      rules:
+        # Consumo rápido: 2 % del presupuesto mensual en 1 h  (14,4 x 0,005 = 0,072)
+        - alert: BiciAlacantPresupuestoConsumoRapido
+          expr: |
+            (1 - bicialacant:sli_disponibilidad:ratio_rate1h) > (14.4 * 0.005)
+            and
+            (1 - bicialacant:sli_disponibilidad:ratio_rate5m) > (14.4 * 0.005)
+          for: 2m
+          labels: {severity: critica, categoria: disponibilidad, origen: api}
+          annotations:
+            summary: "El presupuesto de error del mes se agotaría en unos 2 días a este ritmo"
+            runbook: "02-indicadores-y-pruebas.md#bicialacantpresupuestoconsumorapido"
+        # Consumo lento: 5 % del presupuesto en 6 h  (6 x 0,005 = 0,03)
+        - alert: BiciAlacantPresupuestoConsumoLento
+          expr: |
+            (1 - bicialacant:sli_disponibilidad:ratio_rate6h) > (6 * 0.005)
+            and
+            (1 - bicialacant:sli_disponibilidad:ratio_rate30m) > (6 * 0.005)
+          for: 15m
+          labels: {severity: aviso, categoria: disponibilidad, origen: api}
+          annotations:
+            summary: "El presupuesto de error del mes se agotaría en unos 5 días a este ritmo"
+            runbook: "02-indicadores-y-pruebas.md#bicialacantpresupuestoconsumolento"
+        - alert: BiciAlacantPeticionesLentas
+          expr: bicialacant:sli_latencia:ratio_rate5m < 0.95
+          for: 5m
+          labels: {severity: aviso, categoria: rendimiento, origen: api}
+          annotations:
+            summary: "Solo el {{ $value | humanizePercentage }} de las peticiones responde en menos de 300 ms"
+        - alert: BiciAlacantCpuCercaDelLimite
+          expr: bicialacant:cpu_uso_sobre_limite:ratio > 0.7
+          for: 10m
+          labels: {severity: aviso, categoria: capacidad, origen: api}
+          annotations:
+            summary: "La API usa el {{ $value | humanizePercentage }} de su límite de CPU"
+        - alert: BiciAlacantMemoriaCercaDelLimite
+          expr: bicialacant:memoria_uso_sobre_limite:ratio_max > 0.8
+          for: 10m
+          labels: {severity: aviso, categoria: capacidad, origen: api}
+          annotations:
+            summary: "Una réplica de la API usa el {{ $value | humanizePercentage }} de su límite de memoria (riesgo de OOMKilled)"
+        - alert: BiciAlacantReplicasInsuficientes
+          expr: kube_deployment_status_replicas_available{namespace="bicialacant", deployment="api"} < 2
+          for: 2m
+          labels: {severity: critica, categoria: capacidad, origen: api}
+          annotations:
+            summary: "La API solo tiene {{ $value }} réplicas disponibles (mínimo 2)"
+        - alert: BiciAlacantReinicios
+          expr: bicialacant:reinicios:increase1h >= 3
+          labels: {severity: aviso, categoria: estabilidad, origen: plataforma}
+          annotations:
+            summary: "El contenedor {{ $labels.container }} se ha reiniciado {{ $value | humanize }} veces en 1 h"

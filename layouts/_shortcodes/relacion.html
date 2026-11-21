@@ -1,0 +1,17 @@
+{{- /*
+  Enlaza un concepto con su página en el otro módulo del curso de especialización.
+  Uso: {{< relacion "despliegue" "ud03-kubernetes/ud03-teoria/#9-actualizaciones-y-vuelta-atrás|UD03 · Actualizaciones y vuelta atrás" ... >}}
+  El primer parámetro es el módulo (despliegue | mantenimiento, definidos en params.modulos de hugo.toml);
+  los siguientes, «ruta|texto». En el módulo de Despliegue se muestra «Continúa en», en el de Mantenimiento «Repaso».
+*/ -}}
+{{- $mod := .Get 0 -}}
+{{- $base := index site.Params.modulos $mod -}}
+{{- if not $base -}}{{- errorf "relacion: módulo desconocido '%s' (añádelo a params.modulos)" $mod -}}{{- end -}}
+{{- $etiqueta := cond (eq $mod "despliegue") "Repaso · lo viste en Despliegue (5166)" "Continúa en Mantenimiento (5169)" -}}
+<aside class="sad-relacion sad-relacion--{{ $mod }}">
+  <span class="sad-relacion-tit">{{ $etiqueta }}</span>
+  {{- range $i, $p := .Params -}}{{- if gt $i 0 -}}
+    {{- $partes := split $p "|" -}}
+    <a href="{{ $base }}{{ index $partes 0 }}" target="_blank" rel="noopener">{{ index $partes 1 }}</a>
+  {{- end -}}{{- end -}}
+</aside>

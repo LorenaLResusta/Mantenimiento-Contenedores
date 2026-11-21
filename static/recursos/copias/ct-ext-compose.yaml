@@ -1,0 +1,21 @@
+# Medio externo de copias en ct-ext (práctica 4.2): Garage, almacén compatible con S3.
+# Mailpit sigue funcionando aparte, como lo arrancaste en la UD01.
+#   mkdir -p ~/ct-ext && cd ~/ct-ext   (con garage.toml en esta carpeta, ya con tus secretos)
+#   docker compose -f ct-ext-compose.yaml up -d
+# MinIO dejó de publicar imágenes de su edición comunitaria en octubre de 2025: por eso se usa Garage.
+# Comprueba la última versión 2.x en https://garagehq.deuxfleurs.fr/ y fíjala aquí.
+name: ct-ext
+services:
+  garage:
+    image: dxflrs/garage:v2.4.1
+    restart: unless-stopped
+    ports:
+      - "3900:3900"     # API S3 (la usan las copias y Velero)
+      - "127.0.0.1:3903:3903"   # API de administración: solo desde ct-ext
+    volumes:
+      - ./garage.toml:/etc/garage.toml:ro
+      - garage-meta:/var/lib/garage/meta
+      - garage-datos:/var/lib/garage/data
+volumes:
+  garage-meta: {}
+  garage-datos: {}

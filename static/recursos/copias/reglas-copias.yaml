@@ -1,0 +1,38 @@
+# Alarmas de las copias de seguridad (práctica 4.1): verifican que la copia se ejecuta y termina bien.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: bicialacant-copias
+  namespace: monitorizacion
+spec:
+  groups:
+    - name: bicialacant.copias
+      rules:
+        # RPO = 24 h: si la última copia buena tiene más de 26 h, el RPO ya no se cumple
+        - alert: BiciAlacantCopiaAtrasada
+          expr: |
+            time() - kube_cronjob_status_last_successful_time{namespace="bicialacant", cronjob="copia-db"} > 26 * 3600
+          for: 5m
+          labels: {severity: critica, categoria: copias, origen: db}
+          annotations:
+            summary: "La última copia correcta de la base de datos tiene {{ $value | humanizeDuration }}"
+            runbook: "04-copias-y-actualizaciones.md#copia-atrasada"
+        - alert: BiciAlacantCopiaSinEjecutar
+          expr: absent(kube_cronjob_status_last_successful_time{namespace="bicialacant", cronjob="copia-db"})
+          for: 30m
+          labels: {severity: aviso, categoria: copias, origen: db}
+          annotations:
+            summary: "El CronJob copia-db no existe o no ha terminado bien nunca"
+        - alert: BiciAlacantCopiaFallida
+          expr: |
+            max by (job_name) (kube_job_status_failed{namespace="bicialacant", job_name=~"copia-db-.*"}) > 0
+          labels: {severity: aviso, categoria: copias, origen: db}
+          annotations:
+            summary: "El trabajo de copia {{ $labels.job_name }} ha fallado"
+            description: "Revisa: kubectl -n bicialacant logs job/{{ $labels.job_name }} --all-containers"
+        - alert: BiciAlacantCopiaSuspendida
+          expr: kube_cronjob_spec_suspend{namespace="bicialacant", cronjob="copia-db"} == 1
+          for: 1h
+          labels: {severity: aviso, categoria: copias, origen: db}
+          annotations:
+            summary: "El CronJob de copia está suspendido desde hace más de 1 h"

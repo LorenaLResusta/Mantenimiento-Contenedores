@@ -13,5 +13,6 @@ Esta sección reúne lo que necesitas **antes** de empezar las unidades y que co
 - [Entorno de trabajo](/guia/entorno/): máquinas virtuales, red del laboratorio y software.
 - [Sistema que mantienes: BiciAlacant](/guia/proyecto-bicialacant/): la aplicación en producción y su libro de operaciones.
 - [Cómo son las prácticas y la evaluación](/guia/practicas/): tipos de práctica, entregas, rúbrica y evaluación.
+- [Relación entre Despliegue y Mantenimiento](/guia/relacion-modulos/): qué concepto de un módulo se aplica en el otro, con enlaces.
 
 {{< ra "RA1" "RA2" "RA3" "RA4" "RA5" >}}

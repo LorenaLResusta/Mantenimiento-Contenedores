@@ -10,11 +10,15 @@ Apuntes y prácticas del módulo **5169 · Mantenimiento del sistema de contened
 
 En el módulo de despliegue se pone el sistema en marcha. Aquí empieza el **día 2**: el sistema ya está en producción y tu trabajo es **mantenerlo vivo**. Lo vigilas, compruebas que rinde lo que debe, lees lo que te cuentan los registros, haces copias y actualizaciones sin perder datos y, cuando llega el momento, lo **das de baja** sin dejar rastro.
 
+
+> [!NOTE]
+> Este módulo forma parte del curso de especialización junto con [Despliegue de plataformas de ejecución de contenedores (5166)](https://lorenalresusta.github.io/Despliegue-Contenedores/). La [relación entre los dos módulos](/guia/relacion-modulos/) enlaza cada concepto con el otro, y el [portal de FP](https://lorenalresusta.github.io/FP/) reúne todas las asignaturas por ciclo.
+
 | Característica | Valor |
 |---|---|
 | **Módulo** | 5169 · 45 horas · 6 ECTS |
 | **Resultados de aprendizaje** | 5 (RA1 a RA5), oficiales del RD 144/2026. Consulta la [guía](/guia/ra-ce/) |
-| **Entorno de laboratorio** | VirtualBox 7 · Debian 13 · Docker Engine · kind · Helm · Prometheus, Alertmanager, Grafana y Loki · MinIO · Velero · Trivy · k6 |
+| **Entorno de laboratorio** | VirtualBox 7 · Debian 13 · Docker Engine · kind · Helm · Prometheus, Alertmanager, Grafana y Loki · Garage · Velero · Trivy · k6 |
 | **Sistema que mantienes** | [BiciAlacant, ya desplegado en producción](/guia/proyecto-bicialacant/) |
 
 > [!NOTE]
@@ -38,7 +42,7 @@ Cada unidad tiene una página de **teoría** y una de **prácticas** clasificada
   <div class="sad-card"><span class="sad-card-ra">RA1 · 9 h</span><h3>UD01 · Integración con monitorización y alarmas</h3><p>Exportadores y ServiceMonitor, umbrales, reglas de agregación, Alertmanager, categorización de alarmas y auditoría de puertos.</p><div class="sad-card-links"><a href="ud01-monitorizacion-alarmas/ud01-teoria/">Teoría</a> · <a href="ud01-monitorizacion-alarmas/ud01-practicas/">Prácticas</a></div></div>
   <div class="sad-card"><span class="sad-card-ra">RA2 · 9 h</span><h3>UD02 · Validación del sistema desplegado</h3><p>Catálogo de métricas, indicadores (SLI/SLO) con PromQL, catálogo de alarmas y pruebas funcionales, de carga, estrés y seguridad.</p><div class="sad-card-links"><a href="ud02-validacion-sistema/">Unidad</a></div></div>
   <div class="sad-card"><span class="sad-card-ra">RA3 · 8 h</span><h3>UD03 · Extracción de datos</h3><p>Revisión periódica de registros con Loki, accesos y fuerza bruta, reinicios y volcados, rendimiento de nodos y contenedores.</p><div class="sad-card-links"><a href="ud03-extraccion-datos/">Unidad</a></div></div>
-  <div class="sad-card"><span class="sad-card-ra">RA4 · 12 h</span><h3>UD04 · Copias de seguridad y actualizaciones</h3><p>CronJobs de copia, MinIO y rotación, restauración en un entorno de pruebas, Trivy, parches, actualización sin pérdida y trazabilidad.</p><div class="sad-card-links"><a href="ud04-backup-actualizaciones/">Unidad</a></div></div>
+  <div class="sad-card"><span class="sad-card-ra">RA4 · 12 h</span><h3>UD04 · Copias de seguridad y actualizaciones</h3><p>CronJobs de copia, Garage y rotación, restauración en un entorno de pruebas, Trivy, parches, actualización sin pérdida y trazabilidad.</p><div class="sad-card-links"><a href="ud04-backup-actualizaciones/">Unidad</a></div></div>
   <div class="sad-card"><span class="sad-card-ra">RA5 · 7 h</span><h3>UD05 · Terminación del contenedor</h3><p>Baja ordenada, liberación de recursos, borrado seguro de copias, registros y datos sensibles, desintegración de la monitorización y práctica final.</p><div class="sad-card-links"><a href="ud05-terminacion/">Unidad</a></div></div>
 </div>
 

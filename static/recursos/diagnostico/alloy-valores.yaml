@@ -1,0 +1,78 @@
+# Grafana Alloy: recoge los registros de todos los contenedores y los eventos de Kubernetes
+# y los envía a Loki (práctica 3.1).
+#   helm install alloy grafana/alloy -n monitorizacion -f alloy-valores.yaml
+# Lee los registros a través de la API de Kubernetes (loki.source.kubernetes), así que no
+# necesita montar carpetas del nodo: funciona igual en kind que en un clúster real.
+controller:
+  type: deployment
+  replicas: 1
+alloy:
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {memory: 512Mi}
+  configMap:
+    content: |
+      // 1. Descubrir los Pods del clúster
+      discovery.kubernetes "pods" {
+        role = "pod"
+      }
+
+      // 2. Convertir los metadatos en etiquetas de Loki (pocas y con pocos valores distintos)
+      discovery.relabel "pods" {
+        targets = discovery.kubernetes.pods.targets
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label  = "container"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app"]
+          target_label  = "app"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_node_name"]
+          target_label  = "nodo"
+        }
+      }
+
+      // 3. Leer los registros (stdout y stderr) de cada contenedor
+      loki.source.kubernetes "pods" {
+        targets    = discovery.relabel.pods.output
+        forward_to = [loki.process.niveles.receiver]
+      }
+
+      // 4. Detectar el nivel de cada línea y guardarlo como etiqueta «nivel»
+      loki.process "niveles" {
+        stage.regex {
+          expression = "(?i)(?P<nivel>error|warning|warn|critical|fatal)"
+        }
+        stage.template {
+          source   = "nivel"
+          template = "{{ ToLower .Value }}"
+        }
+        stage.labels {
+          values = { nivel = "" }
+        }
+        forward_to = [loki.write.local.receiver]
+      }
+
+      // 5. Guardar también los eventos de Kubernetes (en el clúster solo duran 1 hora)
+      loki.source.kubernetes_events "eventos" {
+        job_name   = "eventos"
+        log_format = "logfmt"
+        forward_to = [loki.write.local.receiver]
+      }
+
+      // 6. Enviar a Loki
+      loki.write "local" {
+        endpoint {
+          url = "http://loki.monitorizacion.svc:3100/loki/api/v1/push"
+        }
+      }

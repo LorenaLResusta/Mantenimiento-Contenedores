@@ -1,0 +1,126 @@
+# Copia lógica diaria de PostgreSQL con envío a Garage (ct-ext), rotación y limpieza (prácticas 4.1 y 4.2).
+# Antes de aplicar, crea el secreto con la clave «copias-postgres» de Garage (no se guarda en Git):
+#   kubectl -n bicialacant create secret generic copia-s3 \
+#     --from-literal=AWS_ACCESS_KEY_ID=GK... --from-literal=AWS_SECRET_ACCESS_KEY=...
+# Ejecutar una copia ahora:
+#   kubectl -n bicialacant create job --from=cronjob/copia-db copia-manual-$(date +%H%M)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: copia-db
+  namespace: bicialacant
+spec:
+  schedule: "15 3 * * *"          # 3:15 cada noche: poca actividad. RPO del SLA: 24 h
+  timeZone: "Europe/Madrid"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600   # si el clúster estaba parado a esa hora, se lanza al volver (hasta 1 h después)
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels: {app: copia-db}
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 70
+            fsGroup: 70
+            seccompProfile: {type: RuntimeDefault}
+          # 1) Volcado: pg_dump en formato personalizado (-Fc, comprimido, se restaura con pg_restore)
+          initContainers:
+            - name: volcado
+              image: postgres:17-alpine          # la versión de pg_dump debe ser >= que la del servidor
+              command: ["/bin/sh", "-ec"]
+              args:
+                - |
+                  F=/copia/bicialacant-$(date -u +%Y%m%dT%H%M%SZ).dump
+                  pg_dump -h db -U bici -d bicialacant -Fc -f "$F"
+                  pg_restore --list "$F" > /dev/null          # comprueba que el fichero es legible
+                  sha256sum "$F" | sed 's#/copia/##' > "$F.sha256"
+                  ls -l /copia
+              env:
+                - name: PGPASSWORD
+                  valueFrom: {secretKeyRef: {name: db-cred, key: password}}
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities: {drop: [ALL]}
+              volumeMounts:
+                - {name: copia, mountPath: /copia}
+          # 2) Envío al medio externo, rotación (borrar lo que supere la retención) y comprobación
+          containers:
+            - name: envio
+              image: amazon/aws-cli:2.27.0
+              command: ["/bin/bash", "-ec"]
+              args:
+                - |
+                  DESTINO="s3://bicialacant-copias/postgres/$(date -u +%Y/%m)/"
+                  aws s3 cp /copia/ "$DESTINO" --recursive --only-show-errors
+                  echo "Copia enviada a $DESTINO:"; aws s3 ls "$DESTINO" | tail -2
+                  # Rotación: borrar copias con más de RETENCION_DIAS, conservando siempre MINIMO copias
+                  LIMITE=$(date -u -d "-${RETENCION_DIAS} days" +%Y-%m-%dT%H:%M:%S)
+                  aws s3api list-objects-v2 --bucket bicialacant-copias --prefix postgres/ \
+                      --query "Contents[].[LastModified,Key]" --output text > /tmp/lista
+                  TOTAL=$(grep -c '\.dump$' /tmp/lista || true)
+                  VIEJAS=$(while read -r fecha clave; do [[ "$fecha" < "$LIMITE" ]] && echo "$clave"; done < /tmp/lista || true)
+                  N=$(printf '%s\n' "$VIEJAS" | grep -c '\.dump$' || true)
+                  if [ "$N" -gt 0 ] && [ $((TOTAL - N)) -ge "$MINIMO" ]; then
+                    printf '%s\n' "$VIEJAS" | while read -r k; do [ -n "$k" ] || continue; aws s3 rm "s3://bicialacant-copias/$k" --only-show-errors; echo "Borrada: $k"; done
+                  else
+                    echo "Rotación: nada que borrar (total $TOTAL, caducadas $N, mínimo $MINIMO)"
+                  fi
+              env:
+                - {name: AWS_ENDPOINT_URL, value: "http://192.168.56.20:3900"}
+                - {name: AWS_DEFAULT_REGION, value: "garage"}
+                - {name: RETENCION_DIAS, value: "14"}
+                - {name: MINIMO, value: "7"}
+                - {name: HOME, value: /tmp}
+              envFrom:
+                - secretRef: {name: copia-s3}
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities: {drop: [ALL]}
+              volumeMounts:
+                - {name: copia, mountPath: /copia, readOnly: true}
+                - {name: tmp, mountPath: /tmp}
+          volumes:
+            - name: copia
+              emptyDir: {sizeLimit: 1Gi}
+            - name: tmp
+              emptyDir: {}
+---
+# La base de datos solo admitía conexiones de la API: se permite también la del trabajo de copia
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: permitir-copia-db
+  namespace: bicialacant
+spec:
+  podSelector:
+    matchLabels: {app: db}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: {matchLabels: {app: copia-db}}
+      ports: [{protocol: TCP, port: 5432}]
+---
+# El trabajo de copia solo puede hablar con la base de datos y con Garage en ct-ext
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: copia-db-salida
+  namespace: bicialacant
+spec:
+  podSelector:
+    matchLabels: {app: copia-db}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector: {matchLabels: {app: db}}
+      ports: [{protocol: TCP, port: 5432}]
+    - to:
+        - ipBlock: {cidr: 192.168.56.20/32}
+      ports: [{protocol: TCP, port: 3900}]

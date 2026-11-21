@@ -1,0 +1,63 @@
+# Job que aplica la migración del esquema ANTES de actualizar la API (práctica 4.5).
+#   kubectl -n bicialacant create configmap migracion-1.2.0 --from-file=migracion-1.2.0.sql
+#   kubectl apply -f job-migracion.yaml && kubectl -n bicialacant wait --for=condition=complete job/migracion-1.2.0 --timeout=120s
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migracion-1.2.0
+  namespace: bicialacant
+spec:
+  backoffLimit: 0                 # una migración que falla no se reintenta sola: se investiga
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels: {app: migracion}    # la política «permitir-migracion» le deja llegar a la base de datos
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: psql
+          image: postgres:17-alpine     # misma versión mayor que el servidor
+          command: ["psql", "-v", "ON_ERROR_STOP=1", "-h", "db", "-U", "bici", "-d", "bicialacant", "-f", "/sql/migracion-1.2.0.sql"]
+          env:
+            - name: PGPASSWORD
+              valueFrom: {secretKeyRef: {name: db-cred, key: password}}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: sql, mountPath: /sql, readOnly: true}
+      volumes:
+        - name: sql
+          configMap: {name: migracion-1.2.0}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: permitir-migracion
+  namespace: bicialacant
+spec:
+  podSelector:
+    matchLabels: {app: db}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: {matchLabels: {app: migracion}}
+      ports: [{protocol: TCP, port: 5432}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: migracion-salida
+  namespace: bicialacant
+spec:
+  podSelector:
+    matchLabels: {app: migracion}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector: {matchLabels: {app: db}}
+      ports: [{protocol: TCP, port: 5432}]
